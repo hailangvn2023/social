@@ -93,3 +93,17 @@ class MailThread(models.AbstractModel):
         if partners_cc or partners_bcc:
             res["recipient_ids"] = tuple(set(r_ids))
         return res
+
+    def _notify_classify_recipients(self, recipient_data, model_name, msg_vals=None):
+        res = super()._notify_classify_recipients(recipient_data, model_name, msg_vals=msg_vals)
+        is_from_composer = self.env.context.get("is_from_composer", False)
+        if not is_from_composer:
+            return res
+        ids = []
+        for rcpt_data in res:
+            if rcpt_data['notification_group_name'] == 'customer':
+                customer_data = rcpt_data
+            else:
+                ids += rcpt_data['recipients']
+        customer_data['recipients'] += ids
+        return [customer_data]
